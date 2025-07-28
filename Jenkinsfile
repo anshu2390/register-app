@@ -75,9 +75,9 @@ spec:
                 container('dind') {
                     sh 'dockerd-entrypoint.sh & sleep 10'
                     sh 'docker --version'
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh 'docker build -t "$IMAGE_NAME:$BUILD" .'
-                    sh 'docker build -t "$IMAGE_NAME:latest" .'
+                    sh 'echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin'
+                    sh 'docker build -t "${IMAGE_NAME}:${BUILD}" .'
+                    sh 'docker build -t "${IMAGE_NAME}:latest" .'
                 }
             }
         }
