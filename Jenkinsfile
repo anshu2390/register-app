@@ -28,8 +28,6 @@ spec:
     environment {
         APP_NAME = "register-app"
         RELEASE = "1.0.0"
-        DOCKER_USER = "anshu2390"
-        DOCKER_PASS = 'dockerhub'
         IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}" 
     }
@@ -73,11 +71,14 @@ spec:
         stage("Build and Push Docker Image"){
             steps {
                 container('dind') {
-                    sh 'dockerd-entrypoint.sh & sleep 10'
                     sh 'docker --version'
-                    sh 'echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin'
-                    sh 'docker build -t "${IMAGE_NAME}:${BUILD}" .'
-                    sh 'docker build -t "${IMAGE_NAME}:latest" .'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                        sh 'docker build -t "$IMAGE_NAME:$IMAGE_TAG" .'
+                        sh 'docker tag "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:latest"'
+                        sh 'docker push "$IMAGE_NAME:$IMAGE_TAG"'
+                        sh 'docker push "$IMAGE_NAME:latest"'
+                    }
                 }
             }
         }
