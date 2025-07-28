@@ -1,5 +1,26 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+    containers:
+    - name: dind
+      image: docker:24.0.5-dind
+      securityContext:
+        privileged: true
+      volumeMounts:
+      - name: docker-graph-storage
+        mountPath: /var/lib/docker
+    - name: jnlp
+      image: jenkins/inbound-agent:alpine
+    volumes:
+    - name: docker-graph-storage
+      emptyDir: {}
+"""
+        }
+    }
     tools {
         jdk 'Java17'
         maven 'Maven3'
@@ -51,15 +72,12 @@ pipeline {
         }
         stage("Build and Push Docker Image"){
             steps {
-                script {
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image = docker.build "${IMAGE_NAME}"
-                    }
-
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image.push("${IMAGE_TAG}")
-                        docker_image.push('latest')
-                    }
+                container('dind') {
+                    sh 'dockerd-entrypoint.sh & sleep 10'
+                    sh 'docker --version'
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh 'docker build -t "$IMAGE_NAME:$BUILD" .'
+                    sh 'docker build -t "$IMAGE_NAME:latest" .'
                 }
             }
         }
