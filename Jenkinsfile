@@ -94,9 +94,11 @@ spec:
         }
         stage("Cleanup Artifacts"){
             steps {
-                script {
-                    sh "docker rmi $IMAGE_NAME:$IMAGE_TAG"
-                    sh "docker rmi $IMAGE_NAME:latest"
+                container('dind') {
+                    sh 'docker --version'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image anshu2390/register-app:latest --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table'
+                    }
                 }
             }
         }
