@@ -97,5 +97,24 @@ spec:
                 }
             }
         }
+        stage{
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                    git config --global user.name "$GIT_USER"
+                    git config --global user.email "anshu2390@gmail.com"
+
+                    git clone https://$GIT_USER:$GIT_TOKEN@github.com/anshu2390/gitops-register-app.git
+                    cd gitops-register-app
+
+                    sed -i "s|image: .*/${APP_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" deployment.yaml
+
+                    git add deployment.yaml
+                    git commit -m "CI: Update Image tag to ${IMAGE_TAG}"
+                    git push origin main
+                    '''
+                }
+            }
+        }
     }
 }
