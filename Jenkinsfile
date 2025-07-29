@@ -97,7 +97,7 @@ spec:
                 }
             }
         }
-        stage{
+        stage("Update Image tag in K8s Repo"){
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     sh '''
